@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17112b">
+    <title>Dino Dash</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Courier New", monospace;
+        background: #17112b;
+        color: #fdf6b2;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 28px 18px;
+        overflow-x: hidden;
+        background-color: #17112b;
+        background-image: linear-gradient(#21173c 1px, transparent 1px), linear-gradient(90deg, #21173c 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+
+      button {
+        color: inherit;
+        font: inherit;
+      }
+
+      .game-shell {
+        width: min(100%, 1000px);
+        position: relative;
+      }
+
+      .topline {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        margin: 0 4px 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 48px;
+        height: 48px;
+        display: grid;
+        place-items: center;
+        border: 3px solid #fdf6b2;
+        border-radius: 4px;
+        background: #ff5c8a;
+        box-shadow: 4px 4px 0 #080a24;
+        font-size: 26px;
+        image-rendering: pixelated;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.3rem, 3vw, 1.8rem);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .subtitle {
+        margin: 3px 0 0;
+        color: #8ce8df;
+        font-size: 0.86rem;
+      }
+
+      .offline-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 13px;
+        border: 2px solid #514878;
+        border-radius: 3px;
+        background: #251d43;
+        color: #fdf6b2;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .offline-pill::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 0;
+        background: #76f7c5;
+        box-shadow: 0 0 8px #76f7c5;
+        content: "";
+      }
+
+      .arcade {
+        overflow: hidden;
+        border: 3px solid #62558d;
+        border-radius: 5px;
+        background: #211a3b;
+        box-shadow: 8px 8px 0 #080a24;
+      }
+
+      .hud {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-height: 72px;
+        padding: 14px 22px;
+        border-bottom: 3px solid #514878;
+        background: #211a3b;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #8ce8df;
+        font-size: 0.9rem;
+      }
+
+      .status-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 0;
+        background: #ffcf5a;
+        box-shadow: 0 0 8px #ffcf5a;
+      }
+
+      .scoreboard {
+        display: flex;
+        gap: clamp(18px, 5vw, 42px);
+        text-align: right;
+      }
+
+      .score-label {
+        display: block;
+        margin-bottom: 4px;
+        color: #aaa0cf;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+      }
+
+      .score-value {
+        color: #fdf6b2;
+        font-variant-numeric: tabular-nums;
+        font-size: 1.08rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+      }
+
+      .score-value.best {
+        color: #76f7c5;
+      }
+
+      .stage {
+        position: relative;
+        line-height: 0;
+        background: #17112b;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        touch-action: manipulation;
+        image-rendering: pixelated;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: #17112b99;
+        text-align: center;
+        transition: opacity 120ms steps(3), visibility 120ms steps(3);
+      }
+
+      .overlay.hidden {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .overlay-card {
+        max-width: 390px;
+        padding: 23px 30px 25px;
+        border: 3px solid #fdf6b2;
+        border-radius: 4px;
+        background: #211a3b;
+        box-shadow: 6px 6px 0 #080a24;
+        line-height: 1.4;
+      }
+
+      .overlay-card h2 {
+        margin: 0 0 7px;
+        color: #ffcf5a;
+        font-size: clamp(1.5rem, 4vw, 2rem);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .overlay-card p {
+        margin: 0 0 18px;
+        color: #d1c9e8;
+        font-size: 0.94rem;
+      }
+
+      .play-button {
+        min-width: 166px;
+        padding: 12px 20px;
+        border: 0;
+        border: 3px solid #ffe994;
+        border-radius: 3px;
+        background: #ff5c8a;
+        box-shadow: 4px 4px 0 #080a24;
+        color: #17112b;
+        cursor: pointer;
+        font-weight: 900;
+        transition: transform 100ms steps(2);
+      }
+
+      .play-button:hover {
+        background: #ff7aa2;
+      }
+
+      .play-button:active {
+        transform: translate(3px, 3px);
+        box-shadow: 1px 1px 0 #080a24;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px 22px;
+        padding: 16px 14px 18px;
+        color: #bdb4d9;
+        font-size: 0.79rem;
+      }
+
+      .control {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .attack-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #bdb4d9;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .attack-button:hover {
+        color: #ffcf5a;
+      }
+
+      kbd {
+        min-width: 25px;
+        padding: 4px 7px;
+        border: 2px solid #62558d;
+        border-bottom-width: 3px;
+        border-radius: 2px;
+        background: #211a3b;
+        color: #fdf6b2;
+        font-family: inherit;
+        font-size: 0.68rem;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .tip {
+        margin: 14px 0 0;
+        color: #bdb4d9;
+        font-size: 0.84rem;
+        text-align: center;
+      }
+
+      @media (max-width: 560px) {
+        body {
+          padding: 20px 10px;
+        }
+
+        .topline {
+          margin-bottom: 13px;
+        }
+
+        .brand-mark {
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
+        }
+
+        .offline-pill {
+          padding: 8px 10px;
+          font-size: 0.64rem;
+        }
+
+        .arcade {
+          border-radius: 5px;
+        }
+
+        .hud {
+          min-height: 62px;
+          padding: 11px 14px;
+        }
+
+        .status {
+          gap: 7px;
+          font-size: 0.78rem;
+        }
+
+        .score-label {
+          font-size: 0.57rem;
+        }
+
+        .score-value {
+          font-size: 0.95rem;
+        }
+
+        .overlay-card {
+          padding: 17px 19px;
+        }
+
+        .overlay-card p {
+          margin-bottom: 12px;
+          font-size: 0.82rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topline">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">🦖</div>
+          <div>
+            <h1>Dino Dash</h1>
+            <p class="subtitle">Pixel-powered dino action</p>
+          </div>
+        </div>
+      
+      </header>
+
+      <section class="arcade" aria-label="Dino Dash game">
+        <div class="hud">
+          <div class="status" aria-live="polite">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Ready when you are!</span>
+          </div>
+          <div class="scoreboard" aria-label="Scores">
+            <div>
+              <span class="score-label">SCORE</span>
+              <span class="score-value" id="score">00000</span>
+            </div>
+            <div>
+              <span class="score-label">BEST</span>
+              <span class="score-value best" id="best">00000</span>
+            </div>
+          </div>
+        </div>
+        <div class="stage">
+          <canvas id="game" width="960" height="360" aria-label="Pixel dinosaur game. Press Space or Up to jump, Down to duck, and X to shoot fireballs."></canvas>
+          <div class="overlay" id="overlay">
+            <div class="overlay-card">
+              <h2 id="overlay-title">Ready, dino?</h2>
+              <p id="overlay-copy">Jump, duck, and blast incoming fireballs. How long can you survive?</p>
+              <button class="play-button" id="play-button" type="button">Let's run <span aria-hidden="true">→</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="controls" aria-label="Game controls">
+          <span class="control"><kbd>SPACE</kbd><kbd>↑</kbd> Jump</span>
+          <span class="control"><kbd>↓</kbd> Duck</span>
+          <button class="attack-button" id="attack-button" type="button"><kbd>X</kbd> Fireball attack</button>
+          <span class="control"><kbd>ENTER</kbd> Start / restart</span>
+        </div>
+      </section>
+      <p class="tip">Blast fireballs for bonus points — the longer you survive, the faster they fly!</p>
+    </main>
+
+    <script>
+      (() => {
+        const canvas = document.querySelector("#game");
+        const context = canvas.getContext("2d");
+        const scoreElement = document.querySelector("#score");
+        const bestElement = document.querySelector("#best");
+        const statusText = document.querySelector("#status-text");
+        const statusDot = document.querySelector("#status-dot");
+        const overlay = document.querySelector("#overlay");
+        const overlayTitle = document.querySelector("#overlay-title");
+        const overlayCopy = document.querySelector("#overlay-copy");
+        const playButton = document.querySelector("#play-button");
+        const attackButton = document.querySelector("#attack-button");
+
+        const width = canvas.width;
+        const height = canvas.height;
+        const groundY = 294;
+        const dino = { x: 118, y: groundY, velocityY: 0, ducking: false, frame: 0 };
+        const obstacles = [];
+        const shots = [];
+        const particles = [];
+        const stars = [
+          { x: 55, y: 44 }, { x: 182, y: 88 }, { x: 292, y: 35 },
+          { x: 412, y: 66 }, { x: 541, y: 34 }, { x: 654, y: 91 },
+          { x: 884, y: 42 }, { x: 933, y: 115 }, { x: 757, y: 27 },
+          { x: 350, y: 125 }, { x: 128, y: 145 }, { x: 581, y: 137 }
+        ];
+        let state = "ready";
+        let score = 0;
+        let best = readBest();
+        let speed = 5.2;
+        let spawnDistance = 360;
+        let lastTime = 0;
+        let elapsed = 0;
+        let animationFrame;
+        let skyShift = 0;
+        let lastShot = 0;
+
+        function readBest() {
+          try {
+            return Number(localStorage.getItem("dino-dash-best")) || 0;
+          } catch {
+            return 0;
+          }
+        }
+
+        function saveBest(value) {
+          try {
+            localStorage.setItem("dino-dash-best", String(value));
+          } catch {
+            // The game remains playable when storage is unavailable.
+          }
+        }
+
+        function formatScore(value) {
+          return String(Math.floor(value)).padStart(5, "0");
+        }
+
+        bestElement.textContent = formatScore(best);
+
+        function setStatus(text, color) {
+          statusText.textContent = text;
+          statusDot.style.background = color;
+          statusDot.style.boxShadow = `0 0 13px ${color}90`;
+        }
+
+        function startGame() {
+          if (state === "running") return;
+          state = "running";
+          score = 0;
+          speed = 5.2;
+          spawnDistance = 310;
+          elapsed = 0;
+          dino.y = groundY;
+          dino.velocityY = 0;
+          dino.ducking = false;
+          obstacles.length = 0;
+          shots.length = 0;
+          particles.length = 0;
+          lastShot = 0;
+          scoreElement.textContent = formatScore(score);
+          overlay.classList.add("hidden");
+          setStatus("Here we go!", "#74f3bd");
+          lastTime = performance.now();
+          cancelAnimationFrame(animationFrame);
+          animationFrame = requestAnimationFrame(loop);
+        }
+
+        function endGame() {
+          state = "over";
+          if (score > best) {
+            best = score;
+            bestElement.textContent = formatScore(best);
+            saveBest(best);
+            setStatus("New personal best!", "#ffc75c");
+            overlayTitle.textContent = "New high score!";
+          } else {
+            setStatus("Oof! So close.", "#ff8b9d");
+            overlayTitle.textContent = "Run over!";
+          }
+          overlayCopy.textContent = `You dashed ${Math.floor(score)} points. Fancy another run?`;
+          playButton.innerHTML = 'Run it back <span aria-hidden="true">↻</span>';
+          overlay.classList.remove("hidden");
+          burst(dino.x + 22, dino.y - 25, "#ff8292", 16);
+          draw();
+        }
+
+        function jump() {
+          if (state === "ready" || state === "over") {
+            startGame();
+            return;
+          }
+          if (dino.y >= groundY - 0.5) {
+            dino.velocityY = -13.2;
+            dino.ducking = false;
+            burst(dino.x + 15, groundY - 2, "#fff2ae", 5);
+          }
+        }
+
+        function duck(active) {
+          dino.ducking = active && dino.y >= groundY - 0.5;
+        }
+
+        function addObstacle() {
+          obstacles.push({
+            x: width + 24,
+            y: groundY - 23 - Math.random() * 100,
+            type: "fireball",
+            passed: false
+          });
+        }
+
+        function shoot() {
+          if (state !== "running") return;
+          const now = performance.now();
+          if (now - lastShot < 310) return;
+          lastShot = now;
+          const target = obstacles.find((obstacle) => obstacle.x > dino.x);
+          shots.push({
+            x: dino.x + 58,
+            y: dino.y - (dino.ducking ? 17 : 32),
+            targetY: target ? target.y : dino.y - (dino.ducking ? 17 : 32)
+          });
+          burst(dino.x + 59, dino.y - (dino.ducking ? 17 : 32), "#ffcf5a", 4);
+          setStatus("Fireball!", "#ff8b47");
+        }
+
+        function burst(x, y, color, count) {
+          for (let i = 0; i < count; i += 1) {
+            const angle = Math.random() * Math.PI * 2;
+            const force = 1 + Math.random() * 3;
+            particles.push({
+              x, y, color,
+              vx: Math.cos(angle) * force,
+              vy: Math.sin(angle) * force - 1,
+              life: 0.35 + Math.random() * 0.35,
+              size: 2 + Math.random() * 4
+            });
+          }
+        }
+
+        function drawBackdrop() {
+          context.fillStyle = "#17112b";
+          context.fillRect(0, 0, width, height);
+
+          context.fillStyle = "#fdf6b2";
+          for (let i = 0; i < stars.length; i += 1) {
+            const star = stars[i];
+            const twinkle = Math.floor(elapsed / 280 + i) % 3 === 0;
+            context.fillRect(star.x, star.y, twinkle ? 5 : 3, twinkle ? 5 : 3);
+          }
+
+          context.fillStyle = "#302554";
+          context.beginPath();
+          context.moveTo(0, 248);
+          context.lineTo(100, 188);
+          context.lineTo(174, 226);
+          context.lineTo(290, 164);
+          context.lineTo(412, 244);
+          context.lineTo(527, 186);
+          context.lineTo(640, 232);
+          context.lineTo(756, 171);
+          context.lineTo(858, 228);
+          context.lineTo(960, 182);
+          context.lineTo(960, groundY);
+          context.lineTo(0, groundY);
+          context.closePath();
+          context.fill();
+
+          context.fillStyle = "#48356f";
+          context.beginPath();
+          context.moveTo(0, 267);
+          context.lineTo(125, 225);
+          context.lineTo(246, 267);
+          context.lineTo(390, 216);
+          context.lineTo(520, 268);
+          context.lineTo(675, 222);
+          context.lineTo(804, 266);
+          context.lineTo(930, 217);
+          context.lineTo(960, 230);
+          context.lineTo(960, groundY);
+          context.lineTo(0, groundY);
+          context.closePath();
+          context.fill();
+
+          context.fillStyle = "#2de2c5";
+          context.fillRect(0, groundY + 1, width, height - groundY);
+          context.fillStyle = "#fdf6b2";
+          context.fillRect(0, groundY + 1, width, 4);
+
+          context.fillStyle = "#198d9b";
+          for (let i = 0; i < 32; i += 1) {
+            const x = ((i * 51 - skyShift * 1.7) % (width + 24) + width + 24) % (width + 24);
+            context.fillRect(Math.floor(x), groundY + 17 + (i % 3) * 14, 17 + (i % 4) * 4, 4);
+          }
+        }
+
+        function drawDino() {
+          const x = dino.x;
+          const y = dino.y;
+          const ducking = dino.ducking;
+          const bob = state === "running" && y >= groundY - 0.5
+            ? Math.floor(Math.sin(elapsed * 0.025) * 2)
+            : 0;
+          const bodyY = Math.floor(y - (ducking ? 29 : 51) + bob);
+
+          context.save();
+          const scaleX = ducking ? 1.15 : 1;
+          context.translate(Math.floor(x), bodyY);
+          context.scale(scaleX, 1);
+
+          context.fillStyle = "#0c0a20";
+          context.fillRect(4, 12, 52, 38);
+          context.fillRect(27, 1, 36, 32);
+          context.fillRect(-10, 27, 18, 10);
+          context.fillStyle = "#8ce95d";
+          context.fillRect(7, 11, 48, 35);
+          context.fillRect(30, 0, 34, 30);
+          context.fillRect(48, 9, 21, 15);
+          context.fillRect(-7, 25, 17, 8);
+          context.fillStyle = "#b8ff6b";
+          context.fillRect(13, 17, 10, 9);
+          context.fillRect(34, 6, 12, 5);
+          context.fillStyle = "#fff4a3";
+          context.fillRect(51, 5, 6, 6);
+          context.fillStyle = "#17112b";
+          context.fillRect(54, 6, 3, 4);
+          context.fillStyle = "#ff5c8a";
+          context.fillRect(60, 18, 7, 4);
+          context.fillStyle = "#456e58";
+          context.fillRect(13, 40, 11, 15);
+          context.fillRect(39, 40, 11, 15);
+          context.fillStyle = "#fdf6b2";
+          context.fillRect(9, 52, 16, 5);
+          context.fillRect(35, 52, 16, 5);
+
+          if (state === "running" && y >= groundY - 0.5 && !ducking) {
+            const legFrame = Math.floor(elapsed / 75) % 2;
+            context.fillStyle = "#456e58";
+            context.fillRect(13, legFrame ? 40 : 46, 10, legFrame ? 14 : 9);
+            context.fillRect(39, legFrame ? 46 : 40, 10, legFrame ? 9 : 14);
+            context.fillStyle = "#fdf6b2";
+            context.fillRect(9, legFrame ? 52 : 47, 16, 5);
+            context.fillRect(35, legFrame ? 47 : 52, 16, 5);
+          }
+          context.restore();
+        }
+
+        function drawFireball(fireball) {
+          const x = Math.floor(fireball.x);
+          const y = Math.floor(fireball.y);
+          const flicker = Math.floor(elapsed / 65 + x) % 2;
+          context.fillStyle = "#a82f52";
+          context.fillRect(x - 8, y - 6, 17, 13);
+          context.fillRect(x - 4, y - 10, 10, 21);
+          context.fillStyle = "#ff6b35";
+          context.fillRect(x - 5, y - 5, 12, 10);
+          context.fillRect(x - 12, y - 3, 5, 6);
+          context.fillRect(x + 8, y - 2, 5, 5);
+          context.fillStyle = "#ffe76b";
+          context.fillRect(x - 3, y - 3, 7, 6);
+          if (flicker) {
+            context.fillStyle = "#ff9a38";
+            context.fillRect(x - 16, y - 2, 5, 4);
+          }
+        }
+
+        function drawShot(shot) {
+          const x = Math.floor(shot.x);
+          const y = Math.floor(shot.y);
+          context.fillStyle = "#bd3156";
+          context.fillRect(x - 14, y - 5, 19, 10);
+          context.fillStyle = "#ff6b35";
+          context.fillRect(x - 9, y - 4, 13, 8);
+          context.fillStyle = "#fff27a";
+          context.fillRect(x - 4, y - 2, 8, 4);
+        }
+
+        function draw() {
+          context.clearRect(0, 0, width, height);
+          drawBackdrop();
+          for (const obstacle of obstacles) drawFireball(obstacle);
+          for (const shot of shots) drawShot(shot);
+          for (const particle of particles) {
+            context.globalAlpha = Math.max(0, particle.life / 0.7);
+            context.fillStyle = particle.color;
+            context.fillRect(Math.floor(particle.x), Math.floor(particle.y), particle.size, particle.size);
+          }
+          context.globalAlpha = 1;
+          drawDino();
+        }
+
+        function overlapsDino(fireball) {
+          const dinoWidth = 66;
+          const dinoHeight = dino.ducking ? 26 : 57;
+          const dinoTop = dino.y - dinoHeight;
+          const right = dino.x + dinoWidth - 4;
+          return right > fireball.x - 10 && dino.x + 3 < fireball.x + 10
+            && dino.y > fireball.y - 10 && dinoTop < fireball.y + 10;
+        }
+
+        function loop(now) {
+          if (state !== "running") return;
+          const frameTime = Math.min(now - lastTime, 36);
+          const delta = frameTime / 16.67;
+          lastTime = now;
+          elapsed += frameTime;
+          speed = Math.min(5.2 + score / 380, 12);
+          skyShift += speed * delta;
+          score += delta * speed * 0.11;
+          scoreElement.textContent = formatScore(score);
+
+          dino.velocityY += 0.62 * delta;
+          dino.y = Math.min(groundY, dino.y + dino.velocityY * delta);
+          if (dino.y >= groundY) {
+            dino.y = groundY;
+            dino.velocityY = 0;
+          }
+
+          spawnDistance -= speed * delta;
+          if (spawnDistance <= 0) {
+            addObstacle();
+            spawnDistance = Math.max(200, 310 + Math.random() * 260 - speed * 8);
+          }
+
+          for (let i = obstacles.length - 1; i >= 0; i -= 1) {
+            const obstacle = obstacles[i];
+            obstacle.x -= speed * delta;
+            if (overlapsDino(obstacle)) {
+              endGame();
+              return;
+            }
+            if (!obstacle.passed && obstacle.x < dino.x) {
+              obstacle.passed = true;
+              burst(obstacle.x, obstacle.y, "#ff9a38", 3);
+            }
+            if (obstacle.x < -30) obstacles.splice(i, 1);
+          }
+
+          for (let i = shots.length - 1; i >= 0; i -= 1) {
+            const shot = shots[i];
+            shot.x += 12 * delta;
+              const aimDelta = shot.targetY - shot.y;
+              shot.y += Math.sign(aimDelta) * Math.min(Math.abs(aimDelta), 4 * delta);
+              let hit = false;
+            for (let j = obstacles.length - 1; j >= 0; j -= 1) {
+              const obstacle = obstacles[j];
+              if (Math.abs(shot.x - obstacle.x) < 22 && Math.abs(shot.y - obstacle.y) < 16) {
+                obstacles.splice(j, 1);
+                shots.splice(i, 1);
+                score += 25;
+                scoreElement.textContent = formatScore(score);
+                burst(obstacle.x, obstacle.y, "#ffe76b", 12);
+                setStatus("+25 BLAST BONUS!", "#ffcf5a");
+                hit = true;
+                break;
+              }
+            }
+            if (!hit && shot.x > width + 30) shots.splice(i, 1);
+          }
+
+          for (let i = particles.length - 1; i >= 0; i -= 1) {
+            const particle = particles[i];
+            particle.x += particle.vx * delta;
+            particle.y += particle.vy * delta;
+            particle.vy += 0.08 * delta;
+            particle.life -= 0.018 * delta;
+            if (particle.life <= 0) particles.splice(i, 1);
+          }
+
+          draw();
+          animationFrame = requestAnimationFrame(loop);
+        }
+
+        playButton.addEventListener("click", startGame);
+        attackButton.addEventListener("click", () => {
+          if (state !== "running") startGame();
+          shoot();
+        });
+        canvas.addEventListener("pointerdown", () => {
+          if (state !== "running") startGame();
+          else jump();
+        });
+        window.addEventListener("keydown", (event) => {
+          if (["Space", "ArrowUp", "ArrowDown", "Enter", "KeyX", "KeyF"].includes(event.code)) event.preventDefault();
+          if (event.code === "Space" || event.code === "ArrowUp") jump();
+          if (event.code === "ArrowDown") duck(true);
+          if (event.code === "KeyX" || event.code === "KeyF") shoot();
+          if (event.code === "Enter" && state !== "running") startGame();
+        });
+        window.addEventListener("keyup", (event) => {
+          if (event.code === "ArrowDown") duck(false);
+        });
+        window.addEventListener("blur", () => duck(false));
+
+        draw();
+      })();
+    </script>
+  </body>
+</html>
