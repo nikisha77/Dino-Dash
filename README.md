@@ -19,6 +19,8 @@ Then visit:
 http://localhost:8000
 ```
 
+or try here <https://nikisha77.github.io/Dino-Dash/>
+
 ## Controls
 
 - `Space` or `↑` — Jump
